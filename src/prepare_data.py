@@ -1,99 +1,98 @@
 import pandas as pd
 import numpy as np
+import logging
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
+from config import DATASET_DIR, RESULTS_DIR, RANDOM_STATE, TEST_SIZE, TOP_FEATURES
 
-def load_and_analyze_features(csv_path):
-    """
-    Загрузка и анализ важности признаков
-    """
-    # Загрузка данных
-    df = pd.read_csv(csv_path)
-    print(f"Загружено записей: {len(df)}")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    # Проверка на пропущенные значения
-    print("\nПроверка пропущенных значений:")
-    print(df.isnull().sum())
 
-    # Удаление строк с пропущенными значениями
-    df = df.dropna()
-    print(f"Записей после удаления пропущенных значений: {len(df)}")
+class DataPreprocessor:
+    def __init__(self):
+        self.feature_importance = None
 
-    # Анализ важности признаков
-    X = df.drop(['filename', 'label'], axis=1, errors='ignore')
-    y = df['label']
+    def load_and_analyze(self, csv_path):
+        """Загрузка и анализ данных"""
+        try:
+            df = pd.read_csv(csv_path)
+            logger.info(f"Загружено {len(df)} записей")
 
-    # Обучение случайного леса для оценки важности признаков
-    rf = RandomForestClassifier(n_estimators=100, random_state=42)
-    rf.fit(X, y)
+            # Проверка и очистка данных
+            df = self._clean_data(df)
 
-    # Важность признаков
-    feature_importance = pd.DataFrame({
-        'feature': X.columns,
-        'importance': rf.feature_importances_
-    }).sort_values('importance', ascending=False)
+            # Анализ признаков
+            self._analyze_features(df)
+            return df
 
-    print("\nТоп-20 самых важных признаков:")
-    print(feature_importance.head(20))
+        except Exception as e:
+            logger.error(f"Ошибка загрузки данных: {e}")
+            raise
 
-    # Визуализация важности признаков
-    plt.figure(figsize=(12, 8))
-    sns.barplot(x='importance', y='feature', data=feature_importance.head(20))
-    plt.title('Топ-20 самых важных признаков')
-    plt.tight_layout()
-    plt.savefig('../results/feature_importance.png')
-    plt.show()
+    def _clean_data(self, df):
+        """Очистка и предобработка данных"""
+        # Проверка пропущенных значений
+        if df.isnull().sum().any():
+            logger.warning("Обнаружены пропущенные значения")
+            df = df.dropna()
+        return df
 
-    return df, feature_importance
+    def _analyze_features(self, df):
+        """Анализ важности признаков"""
+        X = df.drop(['filename', 'label'], axis=1, errors='ignore')
+        y = df['label']
 
-def split_data(df, feature_importance, top_n=15, test_size=0.2, random_state=42):
-    """
-    Разделение данных с использованием самых важных признаков
-    """
-    # Выбор топ-N самых важных признаков
-    top_features = feature_importance.head(top_n)['feature'].tolist()
-    print(f"\nИспользуем топ-{top_n} признаков: {top_features}")
+        model = RandomForestClassifier(n_estimators=100, random_state=RANDOM_STATE)
+        model.fit(X, y)
 
-    # Разделение на признаки и целевую переменную
-    X = df[top_features]
-    y = df['label']
+        self.feature_importance = pd.DataFrame({
+            'feature': X.columns,
+            'importance': model.feature_importances_
+        }).sort_values('importance', ascending=False)
 
-    # Разделение на train/test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state, stratify=y
-    )
+    def split_data(self, df, top_n=TOP_FEATURES):
+        """Разделение данных на train/test"""
+        top_features = self.feature_importance.head(top_n)['feature'].tolist()
 
-    print(f"\nРазделение данных:")
-    print(f"Обучающая выборка: {len(X_train)} записей")
-    print(f"Тестовая выборка: {len(X_test)} записей")
+        X = df[top_features]
+        y = df['label']
 
-    # Проверка баланса классов
-    print("\nРаспределение классов в обучающей выборке:")
-    print(y_train.value_counts())
-    print("\nРаспределение классов в тестовой выборке:")
-    print(y_test.value_counts())
+        return train_test_split(
+            X, y,
+            test_size=TEST_SIZE,
+            random_state=RANDOM_STATE,
+            stratify=y
+        )
 
-    return X_train, X_test, y_train, y_test, top_features
+
+def main():
+    """Основная функция"""
+    try:
+        processor = DataPreprocessor()
+        df = processor.load_and_analyze(DATASET_DIR / 'enhanced_retinopathy_features.csv')
+
+        X_train, X_test, y_train, y_test = processor.split_data(df)
+
+        # Сохранение данных
+        X_train.to_csv(DATASET_DIR / 'X_train_enhanced.csv', index=False)
+        X_test.to_csv(DATASET_DIR / 'X_test_enhanced.csv', index=False)
+        y_train.to_csv(DATASET_DIR / 'y_train_enhanced.csv', index=False)
+        y_test.to_csv(DATASET_DIR / 'y_test_enhanced.csv', index=False)
+
+        # Сохранение информации о признаках
+        pd.Series(processor.feature_importance.head(TOP_FEATURES)['feature'].tolist()).to_csv(
+            DATASET_DIR / 'top_features.csv', index=False
+        )
+
+        logger.info("Данные успешно подготовлены")
+
+    except Exception as e:
+        logger.error(f"Ошибка в подготовке данных: {e}")
+
 
 if __name__ == "__main__":
-    # Пути к файлам
-    csv_path = "../dataset/enhanced_retinopathy_features.csv"
-
-    # Загрузка и анализ данных
-    df, feature_importance = load_and_analyze_features(csv_path)
-
-    # Разделение данных
-    X_train, X_test, y_train, y_test, top_features = split_data(df, feature_importance, top_n=15)
-
-    # Сохранение разделенных данных
-    X_train.to_csv('../dataset/X_train_enhanced.csv', index=False)
-    X_test.to_csv('../dataset/X_test_enhanced.csv', index=False)
-    y_train.to_csv('../dataset/y_train_enhanced.csv', index=False)
-    y_test.to_csv('../dataset/y_test_enhanced.csv', index=False)
-
-    # Сохранение списка важных признаков
-    pd.Series(top_features).to_csv('../dataset/top_features.csv', index=False)
-
-    print("\nДанные успешно подготовлены и сохранены!")
+    main()

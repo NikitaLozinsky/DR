@@ -1,0 +1,5 @@
+# тут будет датасет
+dataset/images/*
+!dataset/images/*/tear_me_apart.zip
+.venv
+.idea
