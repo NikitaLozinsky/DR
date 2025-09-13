@@ -1,4 +1,5 @@
 import cv2
+import cv2
 import numpy as np
 import pandas as pd
 import os
@@ -6,7 +7,7 @@ import logging
 from tqdm import tqdm
 from skimage import feature, filters, morphology
 from pathlib import Path
-from config import DATASET_DIR, IMAGES_DIR, IMAGE_SIZE, THRESHOLDS
+from config import DATASET_DIR, RESULTS_DIR, IMAGES_DIR, IMAGE_SIZE, THRESHOLDS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

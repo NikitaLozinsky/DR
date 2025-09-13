@@ -1,5 +1,10 @@
-# тут будет датасет
-dataset/images/*
-!dataset/images/*/tear_me_apart.zip
+# игнор датасета в dataset/images/
+dataset/images/**
+# не игнор архива с датасетом((
+!dataset/images/tear_me_apart.zip
+
+# служебные файлы IDE
 .venv
 .idea
+*.pyc
+__pycache__

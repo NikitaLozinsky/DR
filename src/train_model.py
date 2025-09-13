@@ -11,7 +11,7 @@ from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
-from config import DATASET_DIR, RESULTS_DIR, RANDOM_STATE
+from config import DATASET_DIR, RESULTS_DIR, IMAGE_SIZE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

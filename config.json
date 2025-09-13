@@ -1,0 +1,16 @@
+{
+    "IMAGE_SIZE": [
+        128,
+        128
+    ],
+    "THRESHOLDS": {
+        "dark": 30,
+        "light": 200
+    },
+    "DATASET_DIR": "dataset",
+    "RESULTS_DIR": "results",
+    "IMAGES_DIR": "dataset/images",
+    "RANDOM_STATE": 42,
+    "TEST_SIZE": 0.2,
+    "TOP_FEATURES": 100
+}
