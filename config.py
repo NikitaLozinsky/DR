@@ -13,6 +13,22 @@ DEFAULT_CONFIG = {
     'TOP_FEATURES': 100
 }
 
+# Нормативные значения для диагностики
+FEATURE_THRESHOLDS = {
+    'microaneurysms_count': 5,      # Если больше этого значения - признак ретинопатии
+    'exudates_area': 30,            # Если больше этого значения - признак ретинопатии
+    'vessel_length': 200,           # Если меньше этого значения - возможный признак
+    'dark_to_light_ratio': 0.1,     # Если больше этого значения - признак ретинопатии
+    'entropy_mean': 4.0             # Если меньше этого значения - возможный признак
+}
+
+HEALTHY_FEATURE_RANGES = {
+    'microaneurysms_count': (0, 5),
+    'exudates_area': (0, 30),
+    'vessel_length': (200, 1000),
+    'dark_to_light_ratio': (0, 0.1),
+    'entropy_mean': (4.0, 8.0)
+}
 # Файл для сохранения конфигурации
 CONFIG_FILE = Path(__file__).parent / 'config.json'
 

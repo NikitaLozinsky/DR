@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import joblib
 from pathlib import Path
-from config import RESULTS_DIR, DATASET_DIR
+from config import RESULTS_DIR, DATASET_DIR, FEATURE_THRESHOLDS, HEALTHY_FEATURE_RANGES
 from preprocess_images import ImageProcessor
 
 logging.basicConfig(level=logging.INFO)
@@ -87,22 +87,37 @@ def interactive_mode(diagnosis):
             print(f"\nРезультат: {'Есть ретинопатия' if result['prediction'] == 1 else 'Нет ретинопатии'}")
             print(f"Уверенность: {result['confidence']:.2%}")
 
-            # Дополнительная информация
-            # В методе analyze_image класса RetinopathyDiagnosis замените блок с выводом информации:
+            # Анализ признаков в зависимости от результата
             if result['prediction'] == 1:
-                print("\nПризнаки ретинопатии:")
-                if result['features'].get('microaneurysms_count', 0) > 0:
-                    print(f"- Обнаружены микроаневризмы: {result['features']['microaneurysms_count']}")
-                if result['features'].get('exudates_area', 0) > 0:
-                    print(f"- Обнаружены экссудаты: {result['features']['exudates_area']:.2f}")
-                if result['features'].get('vessel_length', 0) > 0:
-                    print(f"- Изменения сосудов: {result['features']['vessel_length']:.2f}")
+                print("\nОбнаруженные признаки ретинопатии:")
+                # Проверяем только признаки, указывающие на болезнь
+                if result['features'].get('microaneurysms_count', 0) > FEATURE_THRESHOLDS['microaneurysms_count']:
+                    print(
+                        f"- Микроаневризмы: {result['features']['microaneurysms_count']} (порог: {FEATURE_THRESHOLDS['microaneurysms_count']})")
+                if result['features'].get('exudates_area', 0) > FEATURE_THRESHOLDS['exudates_area']:
+                    print(
+                        f"- Экссудаты: {result['features']['exudates_area']:.2f} (порог: {FEATURE_THRESHOLDS['exudates_area']})")
+                if result['features'].get('dark_to_light_ratio', 0) > FEATURE_THRESHOLDS['dark_to_light_ratio']:
+                    print(
+                        f"- Соотношение темных/светлых областей: {result['features']['dark_to_light_ratio']:.3f} (порог: {FEATURE_THRESHOLDS['dark_to_light_ratio']})")
+                if result['features'].get('vessel_length', 1000) < FEATURE_THRESHOLDS['vessel_length']:
+                    print(
+                        f"- Длина сосудов: {result['features']['vessel_length']:.2f} (ниже порога: {FEATURE_THRESHOLDS['vessel_length']})")
+                if result['features'].get('entropy_mean', 0) < FEATURE_THRESHOLDS['entropy_mean']:
+                    print(
+                        f"- Энтропия: {result['features']['entropy_mean']:.3f} (ниже порога: {FEATURE_THRESHOLDS['entropy_mean']})")
             else:
                 print("\nПризнаки здоровой сетчатки:")
-                if result['features'].get('microaneurysms_count', 0) == 0:
-                    print("- Микроаневризмы не обнаружены")
-                if result['features'].get('exudates_area', 0) == 0:
-                    print("- Экссудаты не обнаружены")
+                # Показываем только признаки, которые в норме
+                if result['features'].get('microaneurysms_count', 0) <= FEATURE_THRESHOLDS['microaneurysms_count']:
+                    print(f"- Микроаневризмы: не обнаружены (≤ {FEATURE_THRESHOLDS['microaneurysms_count']})")
+                if result['features'].get('exudates_area', 0) <= FEATURE_THRESHOLDS['exudates_area']:
+                    print(f"- Экссудаты: не обнаружены (≤ {FEATURE_THRESHOLDS['exudates_area']})")
+                if result['features'].get('vessel_length', 0) >= FEATURE_THRESHOLDS['vessel_length']:
+                    print(f"- Сосуды: нормальная длина (≥ {FEATURE_THRESHOLDS['vessel_length']})")
+                if result['features'].get('dark_to_light_ratio', 0) <= FEATURE_THRESHOLDS['dark_to_light_ratio']:
+                    print(
+                        f"- Соотношение темных/светлых областей: в норме (≤ {FEATURE_THRESHOLDS['dark_to_light_ratio']})")
         else:
             print("Не удалось проанализировать изображение")
 
@@ -124,13 +139,26 @@ def main():
         if result:
             print(f"Результат: {'Есть ретинопатия' if result['prediction'] == 1 else 'Нет ретинопатии'}")
             print(f"Уверенность: {result['confidence']:.2%}")
+
+            # Анализ признаков для одиночного изображения
+            if result['prediction'] == 1:
+                print("\nОбнаруженные признаки ретинопатии:")
+                if result['features'].get('microaneurysms_count', 0) > FEATURE_THRESHOLDS['microaneurysms_count']:
+                    print(f"- Микроаневризмы: {result['features']['microaneurysms_count']}")
+                if result['features'].get('exudates_area', 0) > FEATURE_THRESHOLDS['exudates_area']:
+                    print(f"- Экссудаты: {result['features']['exudates_area']:.2f}")
+            else:
+                print("\nПризнаки здоровой сетчатки:")
+                if result['features'].get('microaneurysms_count', 0) <= FEATURE_THRESHOLDS['microaneurysms_count']:
+                    print(f"- Микроаневризмы: не обнаружены")
+                if result['features'].get('exudates_area', 0) <= FEATURE_THRESHOLDS['exudates_area']:
+                    print(f"- Экссудаты: не обнаружены")
         else:
             print("Не удалось проанализировать изображение")
             sys.exit(1)
     else:
         # Интерактивный режим
         interactive_mode(diagnosis)
-
 
 if __name__ == "__main__":
     main()
