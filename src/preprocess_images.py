@@ -1,5 +1,4 @@
 import cv2
-import cv2
 import numpy as np
 import pandas as pd
 import os
@@ -39,13 +38,62 @@ class ImageProcessor:
 
     def _extract_features(self, normalized, original):
         """Извлечение признаков из обработанного изображения"""
-        # [Сохраняем всю существующую логику извлечения признаков]
-        # Для краткости оставлю основные структуры без полного кода
+        # 1. Базовые признаки яркости
+        mean_brightness = np.mean(original)
+        std_brightness = np.std(original)
+
+        # 2. Обнаружение микроАневризм (темные круглые объекты)
+        _, dark_thresh = cv2.threshold(normalized, 30, 255, cv2.THRESH_BINARY_INV)
+        dark_objects = morphology.remove_small_objects(dark_thresh.astype(bool), min_size=5)
+        microaneurysms_count = np.sum(dark_objects)
+
+        # 3. Обнаружение экссудатов (светлые области)
+        _, light_thresh = cv2.threshold(normalized, 200, 255, cv2.THRESH_BINARY)
+        light_objects = morphology.remove_small_objects(light_thresh.astype(bool), min_size=5)
+        exudates_area = np.sum(light_objects)
+
+        # 4. Признаки текстуры (LBP)
+        lbp = feature.local_binary_pattern(normalized, 8, 1, method="uniform")
+        lbp_hist, _ = np.histogram(lbp.ravel(), bins=np.arange(0, 10), range=(0, 9))
+        lbp_hist = lbp_hist.astype("float")
+        lbp_hist /= (lbp_hist.sum() + 1e-6)
+
+        # 5. Градиенты и края
+        gx = cv2.Sobel(normalized, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(normalized, cv2.CV_32F, 0, 1)
+        magnitude, _ = cv2.cartToPolar(gx, gy)
+        gradient_mean = np.mean(magnitude)
+
+        # 6. Энтропия как мера текстуры
+        entropy = filters.rank.entropy(normalized, np.ones((3, 3)))
+        entropy_mean = np.mean(entropy)
+
+        # 7. Особенности сосудов (используем морфологические операции)
+        blurred = cv2.GaussianBlur(normalized, (5, 5), 0)
+        _, vessel_thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        vessel_skeleton = morphology.skeletonize(vessel_thresh.astype(bool))
+        vessel_length = np.sum(vessel_skeleton)
+
+        # 8. Отношение площадей различных регионов
+        total_dark_area = np.sum(dark_objects)
+        total_light_area = np.sum(light_objects)
+        dark_to_light_ratio = total_dark_area / (total_light_area + 1e-6)
+
         features = {
-            'mean_brightness': np.mean(original),
-            'std_brightness': np.std(original),
-            # ... остальные признаки
+            'mean_brightness': mean_brightness,
+            'std_brightness': std_brightness,
+            'microaneurysms_count': microaneurysms_count,
+            'exudates_area': exudates_area,
+            'vessel_length': vessel_length,
+            'dark_to_light_ratio': dark_to_light_ratio,
+            'gradient_mean': gradient_mean,
+            'entropy_mean': entropy_mean,
         }
+
+        # Добавляем LBP признаки
+        for i in range(len(lbp_hist)):
+            features[f'lbp_{i}'] = lbp_hist[i]
+
         return features
 
 

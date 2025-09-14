@@ -88,12 +88,15 @@ def interactive_mode(diagnosis):
             print(f"Уверенность: {result['confidence']:.2%}")
 
             # Дополнительная информация
+            # В методе analyze_image класса RetinopathyDiagnosis замените блок с выводом информации:
             if result['prediction'] == 1:
                 print("\nПризнаки ретинопатии:")
                 if result['features'].get('microaneurysms_count', 0) > 0:
                     print(f"- Обнаружены микроаневризмы: {result['features']['microaneurysms_count']}")
                 if result['features'].get('exudates_area', 0) > 0:
-                    print(f"- Обнаружены экссудаты: {result['features']['exudates_area']}")
+                    print(f"- Обнаружены экссудаты: {result['features']['exudates_area']:.2f}")
+                if result['features'].get('vessel_length', 0) > 0:
+                    print(f"- Изменения сосудов: {result['features']['vessel_length']:.2f}")
             else:
                 print("\nПризнаки здоровой сетчатки:")
                 if result['features'].get('microaneurysms_count', 0) == 0:
