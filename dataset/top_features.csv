@@ -1,3 +1,15 @@
 0
+bright_objects_mean_intensity
+hog_std
 std_brightness
+hog_mean
+glcm_correlation
 mean_brightness
+bright_objects_total_area
+bright_objects_count
+glcm_homogeneity
+glcm_contrast
+gradient_orientation_entropy
+dark_objects_total_area
+glcm_energy
+dark_objects_count

@@ -62,7 +62,9 @@
 
 ## Репозиторий
 
-Проект размещен на GitHub: [https://github.com/NikitaLozinsky/DR](https://github.com/NikitaLozinsky/DR)
+Проект размещен на GitHub: [NikitaLozinsky/DR](https://github.com/NikitaLozinsky/DR)
+
+И на GitVerse: [milk13/DR](https://gitverse.ru/milk13/DR) 
 
 ## Требования
 

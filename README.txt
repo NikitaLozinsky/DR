@@ -52,6 +52,3 @@
 - seaborn
 - tqdm
 
-Установите их с помощью pip:
-
-pip install pandas numpy scikit-learn opencv-python scikit-image matplotlib seaborn tqdm

@@ -1,7 +1,7 @@
 {
     "IMAGE_SIZE": [
-        128,
-        128
+        256,
+        256
     ],
     "THRESHOLDS": {
         "dark": 30,

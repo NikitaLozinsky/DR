@@ -35,11 +35,26 @@ class DataPreprocessor:
 
     def _clean_data(self, df):
         """Очистка и предобработка данных"""
-        # Проверка пропущенных значений
-        if df.isnull().sum().any():
-            logger.warning("Обнаружены пропущенные значения")
-            df = df.dropna()
-        return df
+        # Создаем копию DataFrame
+        df_clean = df.copy()
+
+        # 1. Удаляем строки, где нет целевой переменной
+        if 'label' in df_clean.columns:
+            df_clean = df_clean.dropna(subset=['label'])
+
+        # 2. Заполняем пропуски в признаках медианными значениями
+        # (может появиться, если на изображении не нашлось ни одного кандидата на поражение)
+        feature_columns = df_clean.columns.difference(['filename', 'label'])
+        for col in feature_columns:
+            if df_clean[col].isnull().any():
+                median_val = df_clean[col].median()
+                df_clean[col].fillna(median_val, inplace=True)
+
+        # 3. Обработка бесконечных значений (на всякий случай)
+        df_clean = df_clean.replace([np.inf, -np.inf], np.nan)
+        df_clean = df_clean.dropna()
+
+        return df_clean
 
     def _analyze_features(self, df):
         """Анализ важности признаков"""
