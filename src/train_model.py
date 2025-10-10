@@ -35,6 +35,29 @@ class ModelTrainer:
             logger.error(f"Ошибка загрузки данных: {e}")
             raise
 
+    def train_origin_model(self, X_train, X_test, y_train, y_test):
+        """Обучение модели только на 2 признаках из ТЗ"""
+        try:
+            # Отбираем только 2 базовых признака
+            origin_features = ['mean_brightness', 'std_brightness']
+            X_train_origin = X_train[origin_features]
+            X_test_origin = X_test[origin_features]
+
+            # Обучаем логистическую регрессию
+            model = LogisticRegression(max_iter=1000, C=1.0, solver='liblinear', random_state=42)
+            model.fit(X_train_origin, y_train)
+
+            # Предсказания и метрики
+            y_pred = model.predict(X_test_origin)
+            accuracy = accuracy_score(y_test, y_pred)
+
+            logger.info(f"Origin модель (2 признака) - Accuracy: {accuracy:.4f}")
+            return model, accuracy
+
+        except Exception as e:
+            logger.error(f"Ошибка обучения origin модели: {e}")
+            return None, 0
+
     def train_models(self, X_train, X_test, y_train, y_test):
         """Обучение и оценка моделей"""
         models = {
@@ -98,10 +121,20 @@ def main():
         trainer = ModelTrainer()
         X_train, X_test, y_train, y_test = trainer.load_data()
 
-        # Масштабирование признаков
+        # Масштабирование признаков для goty модели
         X_train_scaled = trainer.scaler.fit_transform(X_train)
         X_test_scaled = trainer.scaler.transform(X_test)
 
+        # Обучение origin модели (только 2 признака)
+        origin_model, origin_accuracy = trainer.train_origin_model(X_train, X_test, y_train, y_test)
+        if origin_model:
+            joblib.dump(origin_model, RESULTS_DIR / 'origin_model.pkl')
+            # Сохраняем accuracy origin модели
+            with open(RESULTS_DIR / 'origin_accuracy.txt', 'w') as f:
+                f.write(f"Origin Model Accuracy: {origin_accuracy:.4f}")
+            logger.info(f"Origin модель сохранена с accuracy: {origin_accuracy:.4f}")
+
+        # Обучение goty моделей (все признаки)
         results = trainer.train_models(X_train_scaled, X_test_scaled, y_train, y_test)
         trainer.save_results(results)
 
