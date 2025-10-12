@@ -1,7 +1,7 @@
 {
     "IMAGE_SIZE": [
-        128,
-        128
+        330,
+        330
     ],
     "THRESHOLDS": {
         "dark": 30,
@@ -12,5 +12,5 @@
     "IMAGES_DIR": "dataset/images",
     "RANDOM_STATE": 42,
     "TEST_SIZE": 0.2,
-    "TOP_FEATURES": 100
+    "TOP_FEATURES": 17
 }

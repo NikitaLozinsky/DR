@@ -93,31 +93,42 @@ def interactive_mode(diagnosis):
                 # Проверяем только признаки, указывающие на болезнь
                 if result['features'].get('microaneurysms_count', 0) > FEATURE_THRESHOLDS['microaneurysms_count']:
                     print(
-                        f"- Микроаневризмы: {result['features']['microaneurysms_count']} (порог: {FEATURE_THRESHOLDS['microaneurysms_count']})")
+                        f"- Микроаневризмы: {result['features']['microaneurysms_count']:.0f} (порог: {FEATURE_THRESHOLDS['microaneurysms_count']:.0f})")
                 if result['features'].get('exudates_area', 0) > FEATURE_THRESHOLDS['exudates_area']:
                     print(
-                        f"- Экссудаты: {result['features']['exudates_area']:.2f} (порог: {FEATURE_THRESHOLDS['exudates_area']})")
+                        f"- Экссудаты: {result['features']['exudates_area']:.0f} (порог: {FEATURE_THRESHOLDS['exudates_area']:.0f})")
                 if result['features'].get('dark_to_light_ratio', 0) > FEATURE_THRESHOLDS['dark_to_light_ratio']:
                     print(
-                        f"- Соотношение темных/светлых областей: {result['features']['dark_to_light_ratio']:.3f} (порог: {FEATURE_THRESHOLDS['dark_to_light_ratio']})")
+                        f"- Соотношение темных/светлых областей: {result['features']['dark_to_light_ratio']:.3f} (порог: {FEATURE_THRESHOLDS['dark_to_light_ratio']:.3f})")
                 if result['features'].get('vessel_length', 1000) < FEATURE_THRESHOLDS['vessel_length']:
                     print(
-                        f"- Длина сосудов: {result['features']['vessel_length']:.2f} (ниже порога: {FEATURE_THRESHOLDS['vessel_length']})")
+                        f"- Длина сосудов: {result['features']['vessel_length']:.0f} (ниже порога: {FEATURE_THRESHOLDS['vessel_length']:.0f})")
                 if result['features'].get('entropy_mean', 0) < FEATURE_THRESHOLDS['entropy_mean']:
                     print(
-                        f"- Энтропия: {result['features']['entropy_mean']:.3f} (ниже порога: {FEATURE_THRESHOLDS['entropy_mean']})")
+                        f"- Энтропия: {result['features']['entropy_mean']:.3f} (ниже порога: {FEATURE_THRESHOLDS['entropy_mean']:.3f})")
             else:
                 print("\nПризнаки здоровой сетчатки:")
                 # Показываем только признаки, которые в норме
+                healthy_min, healthy_max = HEALTHY_FEATURE_RANGES['microaneurysms_count']
                 if result['features'].get('microaneurysms_count', 0) <= FEATURE_THRESHOLDS['microaneurysms_count']:
-                    print(f"- Микроаневризмы: не обнаружены (≤ {FEATURE_THRESHOLDS['microaneurysms_count']})")
+                    print(f"- Микроаневризмы: не обнаружены (≤ {FEATURE_THRESHOLDS['microaneurysms_count']:.0f})")
+
+                healthy_min, healthy_max = HEALTHY_FEATURE_RANGES['exudates_area']
                 if result['features'].get('exudates_area', 0) <= FEATURE_THRESHOLDS['exudates_area']:
-                    print(f"- Экссудаты: не обнаружены (≤ {FEATURE_THRESHOLDS['exudates_area']})")
+                    print(f"- Экссудаты: не обнаружены (≤ {FEATURE_THRESHOLDS['exudates_area']:.0f})")
+
+                healthy_min, healthy_max = HEALTHY_FEATURE_RANGES['vessel_length']
                 if result['features'].get('vessel_length', 0) >= FEATURE_THRESHOLDS['vessel_length']:
-                    print(f"- Сосуды: нормальная длина (≥ {FEATURE_THRESHOLDS['vessel_length']})")
+                    print(f"- Сосуды: нормальная длина (≥ {FEATURE_THRESHOLDS['vessel_length']:.0f})")
+
+                healthy_min, healthy_max = HEALTHY_FEATURE_RANGES['dark_to_light_ratio']
                 if result['features'].get('dark_to_light_ratio', 0) <= FEATURE_THRESHOLDS['dark_to_light_ratio']:
                     print(
-                        f"- Соотношение темных/светлых областей: в норме (≤ {FEATURE_THRESHOLDS['dark_to_light_ratio']})")
+                        f"- Соотношение темных/светлых областей: в норме (≤ {FEATURE_THRESHOLDS['dark_to_light_ratio']:.3f})")
+
+                healthy_min, healthy_max = HEALTHY_FEATURE_RANGES['entropy_mean']
+                if result['features'].get('entropy_mean', 0) >= FEATURE_THRESHOLDS['entropy_mean']:
+                    print(f"- Энтропия: в норме (≥ {FEATURE_THRESHOLDS['entropy_mean']:.3f})")
         else:
             print("Не удалось проанализировать изображение")
 
@@ -127,6 +138,12 @@ def main():
     parser = argparse.ArgumentParser(description='Диагностика диабетической ретинопатии')
     parser.add_argument('--image', '-i', help='Путь к изображению для анализа')
     args = parser.parse_args()
+
+    # Показываем пороги только при запуске диагностики
+    print("ТЕКУЩИЕ ПОРОГИ ДИАГНОСТИКИ:")
+    for feature, threshold in FEATURE_THRESHOLDS.items():
+        print(f"  {feature}: {threshold:.2f}")
+    print()
 
     diagnosis = RetinopathyDiagnosis()
     if not diagnosis.load_resources():
@@ -144,9 +161,9 @@ def main():
             if result['prediction'] == 1:
                 print("\nОбнаруженные признаки ретинопатии:")
                 if result['features'].get('microaneurysms_count', 0) > FEATURE_THRESHOLDS['microaneurysms_count']:
-                    print(f"- Микроаневризмы: {result['features']['microaneurysms_count']}")
+                    print(f"- Микроаневризмы: {result['features']['microaneurysms_count']:.0f}")
                 if result['features'].get('exudates_area', 0) > FEATURE_THRESHOLDS['exudates_area']:
-                    print(f"- Экссудаты: {result['features']['exudates_area']:.2f}")
+                    print(f"- Экссудаты: {result['features']['exudates_area']:.0f}")
             else:
                 print("\nПризнаки здоровой сетчатки:")
                 if result['features'].get('microaneurysms_count', 0) <= FEATURE_THRESHOLDS['microaneurysms_count']:
@@ -159,6 +176,7 @@ def main():
     else:
         # Интерактивный режим
         interactive_mode(diagnosis)
+
 
 if __name__ == "__main__":
     main()

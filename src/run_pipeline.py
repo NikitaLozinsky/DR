@@ -1,6 +1,16 @@
 import subprocess
 import sys
 from pathlib import Path
+from config import FEATURE_THRESHOLDS, HEALTHY_FEATURE_RANGES
+
+
+def show_feature_thresholds():
+    """Показывает расчётные пороги диагностики"""
+    print("=" * 50)
+    print("РАСЧЁТНЫЕ ПОРОГИ ДИАГНОСТИКИ:")
+    for feature, threshold in FEATURE_THRESHOLDS.items():
+        print(f"  {feature}: {threshold:.2f}")
+    print("=" * 50)
 
 
 def run_script(script_name, description):
@@ -21,6 +31,9 @@ def run_script(script_name, description):
 def main():
     """Основная функция запуска пайплайна"""
     print("Запуск пайплайна обработки изображений и обучения модели")
+
+    # Показываем пороги только один раз в начале пайплайна
+    show_feature_thresholds()
 
     # Шаг 1: Настройка конфигурации (опционально)
     configure = input("Хотите настроить параметры конфигурации? (y/n): ").strip().lower()

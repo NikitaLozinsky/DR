@@ -81,9 +81,13 @@
 Установите их с помощью pip:
 
 ```bash
+
 pip install pandas numpy scikit-learn opencv-python scikit-image matplotlib seaborn tqdm
 
-#или 
+```
+или 
+
+```bash
 
 pip install -r requirements.txt
 
